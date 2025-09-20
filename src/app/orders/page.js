@@ -67,7 +67,7 @@ const UserOrdersPage = () => {
       if (endDate) queryParams.append('endDate', endDate);
 
       const response = await fetch(
-        `http://localhost:5000/api/orders/my-orders?${queryParams}`,
+        `https://serverdatahub.onrender.com/api/orders/my-orders?${queryParams}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -112,7 +112,7 @@ const UserOrdersPage = () => {
     
     try {
       const response = await fetch(
-        `http://localhost:5000/api/orders/check-status/${reference}`,
+        `https://serverdatahub.onrender.com/api/orders/check-status/${reference}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

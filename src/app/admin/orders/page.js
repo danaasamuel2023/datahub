@@ -48,9 +48,9 @@ const OrdersManagement = () => {
     try {
       setLoading(true);
       
-      let endpoint = 'http://localhost:5000/api/admin/orders';
+      let endpoint = 'https://serverdatahub.onrender.com/api/admin/orders';
       if (activeTab === 'manual') {
-        endpoint = 'http://localhost:5000/api/admin/orders/manual-pending';
+        endpoint = 'https://serverdatahub.onrender.com/api/admin/orders/manual-pending';
       }
       
       const params = {
@@ -93,7 +93,7 @@ const OrdersManagement = () => {
 
   const viewOrderDetails = async (orderId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/admin/orders/${orderId}`, {
+      const response = await axios.get(`https://serverdatahub.onrender.com/api/admin/orders/${orderId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -109,7 +109,7 @@ const OrdersManagement = () => {
     if (!skipConfirm && !confirm(`Are you sure you want to update this order to ${newStatus}?`)) return;
     
     try {
-      await axios.patch(`http://localhost:5000/api/admin/orders/${orderId}/status`, {
+      await axios.patch(`https://serverdatahub.onrender.com/api/admin/orders/${orderId}/status`, {
         status: newStatus
       }, {
         headers: {
@@ -173,7 +173,7 @@ const OrdersManagement = () => {
 
   const processManualOrder = async (orderId, markCompleted) => {
     try {
-      await axios.post(`http://localhost:5000/api/admin/orders/${orderId}/process-manual`, {
+      await axios.post(`https://serverdatahub.onrender.com/api/admin/orders/${orderId}/process-manual`, {
         notes: manualNotes,
         markCompleted
       }, {

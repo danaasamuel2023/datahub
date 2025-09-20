@@ -23,7 +23,7 @@ const NetworksManagement = () => {
   const fetchNetworks = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/admin/networks', {
+      const response = await axios.get('https://serverdatahub.onrender.com/api/admin/networks', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -38,7 +38,7 @@ const NetworksManagement = () => {
 
   const toggleNetworkStatus = async (networkKey, currentStatus) => {
     try {
-      await axios.patch(`http://localhost:5000/api/admin/networks/${networkKey}/toggle`, {
+      await axios.patch(`https://serverdatahub.onrender.com/api/admin/networks/${networkKey}/toggle`, {
         isActive: !currentStatus
       }, {
         headers: {
@@ -65,7 +65,7 @@ const NetworksManagement = () => {
 
   const updateProviderConfig = async () => {
     try {
-      await axios.patch(`http://localhost:5000/api/admin/networks/${selectedNetwork.networkKey}/provider`, providerConfig, {
+      await axios.patch(`https://serverdatahub.onrender.com/api/admin/networks/${selectedNetwork.networkKey}/provider`, providerConfig, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -92,7 +92,7 @@ const NetworksManagement = () => {
 
   const updatePrices = async () => {
     try {
-      await axios.patch(`http://localhost:5000/api/admin/networks/${selectedNetwork.networkKey}/prices`, {
+      await axios.patch(`https://serverdatahub.onrender.com/api/admin/networks/${selectedNetwork.networkKey}/prices`, {
         bundles: bundlePrices
       }, {
         headers: {

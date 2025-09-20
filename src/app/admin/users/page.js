@@ -42,7 +42,7 @@ const UsersManagement = () => {
       if (search) params.search = search;
       if (status !== 'all') params.status = status;
       
-      const response = await axios.get('http://localhost:5000/api/admin/users', {
+      const response = await axios.get('https://serverdatahub.onrender.com/api/admin/users', {
         params,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
@@ -66,7 +66,7 @@ const UsersManagement = () => {
 
   const viewUserDetails = async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/admin/users/${userId}`, {
+      const response = await axios.get(`https://serverdatahub.onrender.com/api/admin/users/${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -86,7 +86,7 @@ const UsersManagement = () => {
     if (!confirm(confirmMsg)) return;
     
     try {
-      await axios.patch(`http://localhost:5000/api/admin/users/${userId}/status`, {
+      await axios.patch(`https://serverdatahub.onrender.com/api/admin/users/${userId}/status`, {
         isDisabled: !currentStatus,
         reason: !currentStatus ? 'Admin disabled' : 'Admin enabled'
       }, {
@@ -109,7 +109,7 @@ const UsersManagement = () => {
     }
     
     try {
-      const response = await axios.post(`http://localhost:5000/api/admin/users/${selectedUser.user._id}/wallet/adjust`, {
+      const response = await axios.post(`https://serverdatahub.onrender.com/api/admin/users/${selectedUser.user._id}/wallet/adjust`, {
         amount: parseFloat(walletAdjustment.amount),
         type: walletAdjustment.type,
         description: walletAdjustment.description,

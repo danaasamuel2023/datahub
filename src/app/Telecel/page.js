@@ -103,7 +103,7 @@ const OrderModal = ({ bundle, onClose }) => {
   
     try {
       // Use the same endpoint structure as MTN
-      const response = await fetch('http://localhost:5000/api/orders/place', {
+      const response = await fetch('https://serverdatahub.onrender.com/api/orders/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -302,7 +302,7 @@ const TelecelBundleDisplay = () => {
       }
 
       // Use your local backend endpoint
-      const response = await fetch('http://localhost:5000/api/orders/networks', {
+      const response = await fetch('https://serverdatahub.onrender.com/api/orders/networks', {
         method: 'GET',
         headers: headers
       });

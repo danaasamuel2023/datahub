@@ -46,7 +46,7 @@ const WalletHistory = () => {
         ...(filters.status && { status: filters.status })
       });
 
-      const response = await fetch(`http://localhost:5000/api/orders/wallet-history?${queryParams}`, {
+      const response = await fetch(`https://serverdatahub.onrender.com/api/orders/wallet-history?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
           'Content-Type': 'application/json'

@@ -63,7 +63,7 @@ const ProfessionalNavbar = () => {
 
     try {
       // Fetch user profile
-      const profileResponse = await fetch('http://localhost:5000/api/user/profile', {
+      const profileResponse = await fetch('https://serverdatahub.onrender.com/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -83,7 +83,7 @@ const ProfessionalNavbar = () => {
       }
 
       // Fetch wallet data separately for real-time balance
-      const walletResponse = await fetch('http://localhost:5000/api/user/wallet', {
+      const walletResponse = await fetch('https://serverdatahub.onrender.com/api/user/wallet', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

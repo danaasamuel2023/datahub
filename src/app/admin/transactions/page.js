@@ -54,7 +54,7 @@ const TransactionsManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/users', {
+      const response = await axios.get('https://serverdatahub.onrender.com/api/admin/users', {
         params: { limit: 100 },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
@@ -77,7 +77,7 @@ const TransactionsManagement = () => {
       const pageSize = 100; // Fetch in batches to avoid timeout
       
       // First, get the total count
-      const firstResponse = await axios.get('http://localhost:5000/api/admin/users', {
+      const firstResponse = await axios.get('https://serverdatahub.onrender.com/api/admin/users', {
         params: { 
           limit: 1,
           page: 1 
@@ -92,7 +92,7 @@ const TransactionsManagement = () => {
       
       // Fetch all users in batches
       while (hasMore) {
-        const usersResponse = await axios.get('http://localhost:5000/api/admin/users', {
+        const usersResponse = await axios.get('https://serverdatahub.onrender.com/api/admin/users', {
           params: { 
             limit: pageSize,
             page: page 
@@ -267,7 +267,7 @@ const TransactionsManagement = () => {
         if (params[key] === undefined) delete params[key];
       });
       
-      const response = await axios.get(`http://localhost:5000/api/admin/users/${filters.userId}/transactions`, {
+      const response = await axios.get(`https://serverdatahub.onrender.com/api/admin/users/${filters.userId}/transactions`, {
         params,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
@@ -292,7 +292,7 @@ const TransactionsManagement = () => {
     if (transaction.user?._id) {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/admin/users/${transaction.user._id}/transactions/${transaction.reference || transaction._id}`,
+          `https://serverdatahub.onrender.com/api/admin/users/${transaction.user._id}/transactions/${transaction.reference || transaction._id}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('Token')}`

@@ -63,7 +63,7 @@ const SystemSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/admin/settings', {
+      const response = await axios.get('https://serverdatahub.onrender.com/api/admin/settings', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -108,7 +108,7 @@ const SystemSettings = () => {
         providers: providerSettings
       };
       
-      const response = await axios.put('http://localhost:5000/api/admin/settings', updatedSettings, {
+      const response = await axios.put('https://serverdatahub.onrender.com/api/admin/settings', updatedSettings, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -132,7 +132,7 @@ const SystemSettings = () => {
   const handleProviderToggle = async (provider, enabled) => {
     try {
       const response = await axios.patch(
-        `http://localhost:5000/api/admin/settings/provider/${provider}`,
+        `https://serverdatahub.onrender.com/api/admin/settings/provider/${provider}`,
         { enabled },
         {
           headers: {
@@ -163,7 +163,7 @@ const SystemSettings = () => {
     try {
       // Simulate API test - replace with actual endpoint when available
       const response = await axios.post(
-        `http://localhost:5000/api/admin/test-provider/${provider}`,
+        `https://serverdatahub.onrender.com/api/admin/test-provider/${provider}`,
         {},
         {
           headers: {

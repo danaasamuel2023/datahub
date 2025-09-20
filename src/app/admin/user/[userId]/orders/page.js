@@ -35,7 +35,7 @@ const UserOrdersPage = () => {
 
   const fetchUserDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/admin/users/${userId}`, {
+      const response = await axios.get(`https://serverdatahub.onrender.com/api/admin/users/${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`
         }
@@ -63,7 +63,7 @@ const UserOrdersPage = () => {
         if (params[key] === '') delete params[key];
       });
       
-      const response = await axios.get(`http://localhost:5000/api/admin/users/${userId}/orders`, {
+      const response = await axios.get(`https://serverdatahub.onrender.com/api/admin/users/${userId}/orders`, {
         params,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('Token')}`

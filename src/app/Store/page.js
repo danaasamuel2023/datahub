@@ -106,7 +106,7 @@ const OrderModal = ({ bundle, onClose }) => {
       }
       
       try {
-        const response = await fetch('http://localhost:5000/api/orders', {
+        const response = await fetch('https://serverdatahub.onrender.com/api/orders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ const OrderModal = ({ bundle, onClose }) => {
     
       try {
         // Use the correct production endpoint with proper authentication
-        const response = await fetch('http://localhost:5000/api/orders/place', {
+        const response = await fetch('https://serverdatahub.onrender.com/api/orders/place', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -358,7 +358,7 @@ const MTNBundleDisplay = () => {
       }
 
       // Use your local backend endpoint
-      const response = await fetch('http://localhost:5000/api/orders/networks', {
+      const response = await fetch('https://serverdatahub.onrender.com/api/orders/networks', {
         method: 'GET',
         headers: headers
       });

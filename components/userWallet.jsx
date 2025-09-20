@@ -20,7 +20,7 @@ const WalletBalance = () => {
       }
 
       // Use the dashboard endpoint to get user balance
-      const response = await fetch('http://localhost:5000/api/orders/dashboard', {
+      const response = await fetch('https://serverdatahub.onrender.com/api/orders/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
