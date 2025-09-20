@@ -8,7 +8,7 @@ import {
   X,
   LogOut
 } from 'lucide-react';
-import WalletBalance from '../../../components/userWallet ';
+import WalletBalance from '../../../components/userWallet';
 
 const DataBundle = ({ bundle, onSelect }) => {
   return (
@@ -34,7 +34,7 @@ const DataBundle = ({ bundle, onSelect }) => {
           <div className="p-4 text-center">
             <div className="text-xl font-bold">No-Expiry</div>
             <div className="text-sm">Duration</div>
-          </div>
+          </div> 
         </div>
       </div>
     </div>

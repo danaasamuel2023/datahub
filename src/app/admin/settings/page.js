@@ -86,7 +86,12 @@ const SystemSettings = () => {
       });
     } catch (error) {
       console.error('Failed to fetch settings:', error);
-      alert('Failed to load settings');
+      
+      if (error.response?.status === 403) {
+        alert('Access denied. You need admin privileges to view settings.');
+      } else {
+        alert('Failed to load settings');
+      }
     } finally {
       setLoading(false);
     }
@@ -113,7 +118,12 @@ const SystemSettings = () => {
       alert('Settings updated successfully');
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
+      
+      if (error.response?.status === 403) {
+        alert('Access denied. You need admin privileges to save settings.');
+      } else {
+        alert('Failed to save settings');
+      }
     } finally {
       setSaving(false);
     }
