@@ -475,9 +475,9 @@ const UserOrdersPage = () => {
                             <span className="text-gray-500">Network:</span> 
                             <span className="ml-1 text-amber-400">{formatNetworkName(order.networkKey)}</span>
                           </p>
-                          <p className="text-gray-400">
+                          {/* <p className="text-gray-400">
                             <span className="text-gray-500">Provider:</span> {order.provider || 'N/A'}
-                          </p>
+                          </p> */}
                         </div>
                       </div>
                       <div className="text-right space-y-1">
