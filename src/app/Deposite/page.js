@@ -1,469 +1,495 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { 
+  Wallet, 
   CreditCard, 
   AlertCircle, 
-  Loader2, 
-  Info, 
-  Shield, 
-  Zap,
-  Wallet,
-  ArrowLeft,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  Plus,
-  Sparkles,
-  DollarSign,
-  Activity,
-  ChevronRight,
+  CheckCircle, 
+  Clock, 
+  RefreshCw,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Plus,
+  Loader2,
+  Info,
+  X
 } from 'lucide-react';
 
-const ModernDepositPage = () => {
+const DepositPage = () => {
   // State management
+  const [walletData, setWalletData] = useState(null);
+  const [transactions, setTransactions] = useState([]);
   const [amount, setAmount] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [user, setUser] = useState(null);
-  const [walletBalance, setWalletBalance] = useState(2547.50);
-  const [recentTransactions, setRecentTransactions] = useState([
-    { id: 1, amount: 100.00, fee: 2.00, date: '2025-01-15', time: '14:30', status: 'completed' },
-    { id: 2, amount: 250.00, fee: 5.00, date: '2025-01-14', time: '09:15', status: 'completed' },
-    { id: 3, amount: 50.00, fee: 1.00, date: '2025-01-12', time: '18:45', status: 'completed' }
-  ]);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-  const [selectedAmount, setSelectedAmount] = useState(null);
-  
-  // Configuration
-  const MIN_AMOUNT = 10;
-  const MAX_AMOUNT = 10000;
-  const PROCESSING_FEE = 0.02; // 2% added to payment
+  const [feeInfo, setFeeInfo] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Quick amount options
-  const quickAmounts = [
-    { value: 10, label: '₵10', popular: false },
-    { value: 20, label: '₵20', popular: false },
-    { value: 50, label: '₵50', popular: true },
-    { value: 100, label: '₵100', popular: true },
-    { value: 200, label: '₵200', popular: false },
-    { value: 500, label: '₵500', popular: false }
-  ];
-
-  // Load user data on mount
-  useEffect(() => {
-    // Simulated user data for demo
-    setUser({
-      id: '123',
-      email: 'user@datahub.gh',
-      name: 'John Doe'
-    });
-  }, []);
-
-  // Handle deposit
-  const handleDeposit = async () => {
-    setError('');
-    setSuccess('');
-
-    const depositAmount = parseFloat(amount);
+  // Fee calculation (assuming 1.95% + 0.25 GHS as default)
+  const calculateFees = (inputAmount) => {
+    if (!inputAmount || isNaN(inputAmount)) return null;
     
-    // Validation
-    if (!amount || isNaN(depositAmount)) {
-      setError('Please enter a valid amount');
-      return;
-    }
+    const amount = parseFloat(inputAmount);
+    const percentageFee = amount * 0.0195; // 1.95%
+    const fixedFee = 0.25; // 0.25 GHS
+    const totalFee = percentageFee + fixedFee;
+    const totalPayment = amount + totalFee;
+    
+    return {
+      desiredAmount: amount,
+      fee: totalFee,
+      totalPayment: totalPayment
+    };
+  };
 
-    if (depositAmount < MIN_AMOUNT) {
-      setError(`Minimum deposit amount is GHC ${MIN_AMOUNT.toFixed(2)}`);
-      return;
+  // Fetch wallet data
+  const fetchWalletData = async () => {
+    try {
+      const token = localStorage.getItem('Token');
+      const response = await fetch('https://serverdatahub.onrender.com/api/user/wallet', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWalletData(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch wallet:', err);
     }
+  };
 
-    if (depositAmount > MAX_AMOUNT) {
-      setError(`Maximum deposit amount is GHC ${MAX_AMOUNT.toFixed(2)}`);
+  // Fetch transactions
+  const fetchTransactions = async () => {
+    setRefreshing(true);
+    try {
+      const token = localStorage.getItem('Token');
+      const response = await fetch('https://serverdatahub.onrender.com/api/v1/transactions?limit=10', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.data.transactions);
+      }
+    } catch (err) {
+      console.error('Failed to fetch transactions:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Initialize payment
+  const handleInitializePayment = async () => {
+    if (!amount || parseFloat(amount) < 1) {
+      setError('Please enter an amount of at least GHS 1.00');
       return;
     }
 
     setLoading(true);
-    
+    setError('');
+    setSuccess('');
+
     try {
-      // Simulated API call
-      setTimeout(() => {
-        setSuccess('Redirecting to secure payment gateway...');
-        setLoading(false);
-        // In real implementation, redirect to payment gateway
-        console.log('Payment initialized with amount:', depositAmount);
-      }, 2000);
-    } catch (error) {
-      console.error('Payment initialization error:', error);
-      setError('Connection error. Please check your internet and try again.');
+      const token = localStorage.getItem('Token');
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      
+      const response = await fetch('https://serverdatahub.onrender.com/api/v1/initialize-payment', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: parseFloat(amount),
+          email: email || userData.email,
+          callback_url: `${window.location.origin}/deposit/verify`
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        // Store reference for verification after redirect
+        sessionStorage.setItem('payment_reference', data.data.reference);
+        sessionStorage.setItem('payment_amount', amount);
+        
+        // Redirect to Paystack
+        window.location.href = data.data.authorization_url;
+      } else {
+        throw new Error(data.message || 'Failed to initialize payment');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to initialize payment. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
-  // Handle amount input change
-  const handleAmountChange = (e) => {
-    const value = e.target.value;
-    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-      setAmount(value);
-      setSelectedAmount(null);
-      setError('');
+  // Verify payment (called after redirect back)
+  const verifyPayment = async (reference) => {
+    setVerifying(true);
+    setError('');
+    
+    try {
+      const token = localStorage.getItem('Token');
+      const response = await fetch('https://serverdatahub.onrender.com/api/payments/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reference })
+      });
+
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setSuccess(data.data.alreadyProcessed 
+          ? 'Payment already processed successfully!' 
+          : `Payment successful! GHS ${data.data.amount.toFixed(2)} has been added to your wallet.`
+        );
+        
+        // Clear stored payment data
+        sessionStorage.removeItem('payment_reference');
+        sessionStorage.removeItem('payment_amount');
+        
+        // Refresh wallet and transactions
+        fetchWalletData();
+        fetchTransactions();
+      } else {
+        throw new Error(data.message || 'Payment verification failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to verify payment. Please check your transaction history.');
+    } finally {
+      setVerifying(false);
     }
   };
 
-  // Set quick amount
-  const setQuickAmount = (value) => {
-    setAmount(value.toString());
-    setSelectedAmount(value);
-    setError('');
-  };
+  // Check for payment verification on mount
+  useEffect(() => {
+    // Check if returning from payment
+    const urlParams = new URLSearchParams(window.location.search);
+    const reference = urlParams.get('reference') || sessionStorage.getItem('payment_reference');
+    
+    if (reference) {
+      verifyPayment(reference);
+    }
+    
+    // Fetch initial data
+    fetchWalletData();
+    fetchTransactions();
+    
+    // Get user email
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    if (userData.email) {
+      setEmail(userData.email);
+    }
+  }, []);
 
-  // Calculate fees
-  const depositAmount = parseFloat(amount) || 0;
-  const processingFee = depositAmount * PROCESSING_FEE;
-  const totalPayment = depositAmount + processingFee;
+  // Update fee info when amount changes
+  useEffect(() => {
+    const fees = calculateFees(amount);
+    setFeeInfo(fees);
+  }, [amount]);
 
   // Format date
-  const formatDate = (date, time) => {
-    return `${date} at ${time}`;
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-yellow-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-yellow-400/5 rounded-full filter blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        
-        {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="h-full w-full" style={{
-            backgroundImage: 'linear-gradient(90deg, #facc15 1px, transparent 1px), linear-gradient(#facc15 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
-          }}></div>
-        </div>
-      </div>
-      
-      <div className="relative z-10 max-w-6xl mx-auto py-8 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => console.log('Navigate back')}
-              className="flex items-center gap-2 text-yellow-400/70 hover:text-yellow-400 transition-colors mb-4 group"
-            >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm">Back to Dashboard</span>
-            </button>
-            
-            <h1 className="text-4xl font-bold text-yellow-400 flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-xl">
-                <Wallet className="w-8 h-8" />
-              </div>
-              Add Money to Wallet
-            </h1>
-          </div>
-          
-          {/* Balance Card */}
-          <div className="bg-gradient-to-br from-yellow-400/10 to-yellow-600/10 rounded-2xl p-6 border border-yellow-400/20 backdrop-blur-sm min-w-[250px]">
-            <div className="flex items-center gap-2 text-yellow-400/70 text-sm mb-2">
-              <Activity className="w-4 h-4" />
-              Current Balance
-            </div>
-            {loadingBalance ? (
-              <Loader2 className="w-5 h-5 animate-spin text-yellow-400" />
-            ) : (
-              <div className="text-3xl font-bold text-yellow-400">
-                ₵{walletBalance.toFixed(2)}
-              </div>
-            )}
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <Wallet className="w-8 h-8 text-blue-600" />
+            Wallet Deposit
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Add funds to your wallet using Paystack secure payment
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Deposit Card */}
-          <div className="lg:col-span-2">
-            <div className="bg-black/50 backdrop-blur-xl rounded-2xl border border-yellow-400/20 shadow-2xl overflow-hidden">
-              <div className="p-8 space-y-6">
-                {/* Amount Input Section */}
-                <div>
-                  <label className="block text-sm font-medium text-yellow-400/80 mb-3">
-                    Enter Amount to Add
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-yellow-400">
-                      <DollarSign className="w-6 h-6" />
-                    </div>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={amount}
-                      onChange={handleAmountChange}
-                      className="w-full pl-16 pr-6 py-6 text-3xl font-bold
-                               border-2 border-yellow-400/30 rounded-xl 
-                               bg-black/70 text-yellow-400
-                               focus:outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/10
-                               placeholder-yellow-400/20 transition-all"
-                      placeholder="0.00"
-                      disabled={loading}
-                    />
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-yellow-400/50 text-sm">
-                      GHC
-                    </div>
-                  </div>
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-gray-500">
-                      Min: ₵{MIN_AMOUNT} • Max: ₵{MAX_AMOUNT.toLocaleString()}
-                    </p>
-                    {amount && depositAmount >= MIN_AMOUNT && (
-                      <p className="text-xs text-green-400 animate-fadeIn">
-                        ✓ Valid amount
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quick Amount Grid */}
-                <div>
-                  <p className="text-xs text-yellow-400/60 mb-3 uppercase tracking-wide">Quick Select</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {quickAmounts.map((quick) => (
-                      <button
-                        key={quick.value}
-                        onClick={() => setQuickAmount(quick.value)}
-                        disabled={loading}
-                        className={`relative py-4 px-4 rounded-xl font-semibold transition-all transform hover:scale-[1.02]
-                                 ${selectedAmount === quick.value 
-                                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-black shadow-lg shadow-yellow-400/30' 
-                                   : 'bg-black/50 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400/50'
-                                 }
-                                 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
-                      >
-                        {quick.label}
-                        {quick.popular && (
-                          <span className="absolute -top-2 -right-2 bg-green-500 text-black text-[10px] px-2 py-1 rounded-full font-bold">
-                            Popular
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Fee Breakdown Card */}
-                {amount && depositAmount >= MIN_AMOUNT && (
-                  <div className="bg-gradient-to-br from-yellow-400/5 to-yellow-600/5 rounded-xl p-6 border border-yellow-400/20">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400 flex items-center gap-2">
-                          <Wallet className="w-4 h-4" />
-                          Amount to wallet
-                        </span>
-                        <span className="text-2xl font-bold text-green-400">
-                          ₵{depositAmount.toFixed(2)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-500 flex items-center gap-2">
-                          <Info className="w-3 h-3" />
-                          Processing fee (2%)
-                        </span>
-                        <span className="text-yellow-400/70 flex items-center gap-1">
-                          <Plus className="w-3 h-3" />
-                          ₵{processingFee.toFixed(2)}
-                        </span>
-                      </div>
-                      
-                      <div className="pt-4 border-t border-yellow-400/20">
-                        <div className="flex justify-between items-center">
-                          <span className="text-yellow-400 font-medium">
-                            Total to pay
-                          </span>
-                          <div className="text-right">
-                            <div className="text-3xl font-bold text-yellow-400">
-                              ₵{totalPayment.toFixed(2)}
-                            </div>
-                            <div className="text-xs text-gray-500">via Paystack</div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-green-400/10 rounded-lg p-3">
-                        <p className="text-xs text-green-400 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4" />
-                          You'll receive exactly ₵{depositAmount.toFixed(2)} in your wallet
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Error Message */}
-                {error && (
-                  <div className="flex items-start gap-3 p-4 bg-red-900/20 rounded-xl border border-red-400/50">
-                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-400">{error}</p>
-                  </div>
-                )}
-
-                {/* Success Message */}
-                {success && (
-                  <div className="flex items-start gap-3 p-4 bg-green-900/20 rounded-xl border border-green-400/50">
-                    <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-green-400 font-medium">{success}</p>
-                      <p className="text-xs text-green-400/70 mt-1">Please wait...</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Deposit Button */}
+          {/* Main Deposit Form */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Current Balance Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Current Balance
+                </h2>
                 <button
-                  onClick={handleDeposit}
-                  disabled={loading || !amount || depositAmount < MIN_AMOUNT || depositAmount > MAX_AMOUNT}
-                  className="w-full relative group overflow-hidden py-5 px-8 
-                           bg-gradient-to-r from-yellow-400 to-yellow-500 
-                           text-black font-bold text-lg rounded-xl
-                           hover:shadow-2xl hover:shadow-yellow-400/30
-                           focus:outline-none focus:ring-4 focus:ring-yellow-400/50
-                           disabled:from-gray-800 disabled:to-gray-900 disabled:text-gray-600
-                           disabled:cursor-not-allowed
-                           transform transition-all duration-300 hover:scale-[1.02]"
+                  onClick={fetchWalletData}
+                  className="text-blue-600 hover:text-blue-700"
                 >
-                  <div className="relative z-10 flex items-center justify-center gap-3">
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Processing Payment...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-5 h-5" />
-                        <span>
-                          {amount && depositAmount >= MIN_AMOUNT 
-                            ? `Pay ₵${totalPayment.toFixed(2)} Now`
-                            : 'Enter Amount to Continue'
-                          }
-                        </span>
-                        {amount && depositAmount >= MIN_AMOUNT && (
-                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {/* Animated gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  <RefreshCw className="w-4 h-4" />
                 </button>
+              </div>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white">
+                GHS {walletData?.balance?.toFixed(2) || '0.00'}
+              </div>
+              {walletData?.pendingTransactions > 0 && (
+                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2 flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {walletData.pendingTransactions} pending transaction(s)
+                </p>
+              )}
+            </div>
 
-                {/* Security badges */}
-                <div className="flex items-center justify-center gap-6 py-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <div className="p-1.5 bg-green-400/10 rounded-lg">
-                      <Shield className="w-4 h-4 text-green-400" />
+            {/* Deposit Form */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                Add Funds
+              </h2>
+
+              {/* Success Alert */}
+              {success && (
+                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-green-800 dark:text-green-200">{success}</p>
                     </div>
-                    <span>Secure</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <div className="p-1.5 bg-yellow-400/10 rounded-lg">
-                      <Zap className="w-4 h-4 text-yellow-400" />
-                    </div>
-                    <span>Instant</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <div className="p-1.5 bg-blue-400/10 rounded-lg">
-                      <Clock className="w-4 h-4 text-blue-400" />
-                    </div>
-                    <span>24/7 Available</span>
+                    <button
+                      onClick={() => setSuccess('')}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
+              )}
+
+              {/* Error Alert */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-red-800 dark:text-red-200">{error}</p>
+                    </div>
+                    <button
+                      onClick={() => setError('')}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Amount Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Amount (GHS)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    GHS
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-14 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                    disabled={loading || verifying}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Minimum deposit: GHS 1.00
+                </p>
+              </div>
+
+              {/* Fee Breakdown */}
+              {feeInfo && amount && (
+                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Amount to add:</span>
+                      <span className="text-gray-900 dark:text-white font-medium">
+                        GHS {feeInfo.desiredAmount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        Processing fee:
+                      </span>
+                      <span className="text-gray-900 dark:text-white font-medium">
+                        GHS {feeInfo.fee.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-900 dark:text-white font-semibold">
+                          Total payment:
+                        </span>
+                        <span className="text-gray-900 dark:text-white font-bold text-lg">
+                          GHS {feeInfo.totalPayment.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Email Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loading || verifying}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                onClick={handleInitializePayment}
+                disabled={loading || verifying || !amount || parseFloat(amount) < 1}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Processing...
+                  </>
+                ) : verifying ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Verifying Payment...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    Pay with Paystack
+                  </>
+                )}
+              </button>
+
+              {/* Security Note */}
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-800 dark:text-blue-200 flex items-start gap-2">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>
+                    Your payment is secured by Paystack. You'll be redirected to complete the payment and automatically returned here.
+                  </span>
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Recent Transactions */}
-            <div className="bg-black/50 backdrop-blur-xl rounded-2xl border border-yellow-400/20 p-6">
-              <h3 className="text-lg font-semibold text-yellow-400 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Recent Deposits
-              </h3>
-              <div className="space-y-3">
-                {recentTransactions.map((trans) => (
-                  <div key={trans.id} className="group hover:bg-yellow-400/5 rounded-lg p-3 -mx-3 transition-all cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-400/10 rounded-lg">
-                          <ArrowDownRight className="w-4 h-4 text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-yellow-400">
-                            +₵{trans.amount.toFixed(2)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatDate(trans.date, trans.time)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs px-2 py-1 bg-green-400/10 text-green-400 rounded-full">
-                          {trans.status}
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Fee: ₵{trans.fee.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          {/* Transaction History Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Recent Transactions
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowHistory(!showHistory);
+                    if (!showHistory) fetchTransactions();
+                  }}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
               </div>
-              <button className="w-full mt-4 text-center text-sm text-yellow-400/70 hover:text-yellow-400 transition-colors">
-                View all transactions →
-              </button>
-            </div>
 
-            {/* Information Card */}
-            <div className="bg-gradient-to-br from-yellow-400/10 to-yellow-600/10 rounded-2xl p-6 border border-yellow-400/20">
-              <h3 className="text-sm font-semibold text-yellow-400 mb-4 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Quick Info
-              </h3>
-              <ul className="space-y-3 text-xs">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-400">
-                    2% fee added to payment amount
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-400">
-                    Instant credit to wallet
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-400">
-                    SMS confirmation sent
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-400">
-                    Secured by Paystack
-                  </span>
-                </li>
-              </ul>
-            </div>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {transactions.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No transactions yet
+                  </p>
+                ) : (
+                  transactions.map((transaction, index) => (
+                    <div
+                      key={transaction.reference || index}
+                      className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-2">
+                          {transaction.type === 'credit' ? (
+                            <ArrowDownRight className="w-4 h-4 text-green-600 mt-1" />
+                          ) : (
+                            <ArrowUpRight className="w-4 h-4 text-red-600 mt-1" />
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {transaction.type === 'credit' ? 'Deposit' : 'Purchase'}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDate(transaction.timestamp)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-sm font-bold ${
+                            transaction.type === 'credit' 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-red-600 dark:text-red-400'
+                          }`}>
+                            {transaction.type === 'credit' ? '+' : '-'}GHS {transaction.amount?.toFixed(2) || '0.00'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className={`inline-flex items-center gap-1 ${
+                              transaction.status === 'completed' ? 'text-green-600' :
+                              transaction.status === 'pending' ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              {transaction.status === 'completed' && <CheckCircle className="w-3 h-3" />}
+                              {transaction.status === 'pending' && <Clock className="w-3 h-3" />}
+                              {transaction.status === 'failed' && <X className="w-3 h-3" />}
+                              {transaction.status}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      {transaction.description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                          {transaction.description}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
 
-            {/* Support Card */}
-            <div className="bg-black/50 backdrop-blur-xl rounded-2xl border border-yellow-400/20 p-6 text-center">
-              <p className="text-sm text-gray-400 mb-3">Need assistance?</p>
-              <button className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium">
-                Contact Support →
-              </button>
+              {transactions.length > 0 && (
+                <button
+                  onClick={() => window.location.href = '/transactions'}
+                  className="w-full mt-4 py-2 text-center text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  View All Transactions →
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -472,4 +498,4 @@ const ModernDepositPage = () => {
   );
 };
 
-export default ModernDepositPage;
+export default DepositPage;
