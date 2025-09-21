@@ -381,11 +381,11 @@ const Dashboard = () => {
                       <p className="text-sm text-gray-400">
                         Network: <span className="text-amber-400">{order.networkKey || '-'}</span>
                       </p>
-                      {order.provider && (
+                      {/* {order.provider && (
                         <p className="text-sm text-gray-400">
                           Provider: <span className="text-blue-400">{order.provider}</span>
                         </p>
-                      )}
+                      )} */}
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-white text-lg">
